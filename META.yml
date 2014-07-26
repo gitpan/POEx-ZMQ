@@ -1,0 +1,38 @@
+---
+abstract: 'Asynchronous ZeroMQ sockets for POE'
+author:
+  - 'Jon Portnoy <avenj@cobaltirc.org>'
+build_requires:
+  ExtUtils::MakeMaker: 0
+  File::Spec: 0
+  List::Util: 0
+  Scalar::Util: 0
+  Test::More: 0.96
+  version: 0.77
+configure_requires:
+  Devel::CheckLib: 0
+  ExtUtils::MakeMaker: 6.30
+dynamic_config: 0
+generated_by: 'Dist::Zilla version 5.019, CPAN::Meta::Converter version 2.142060'
+license: perl
+meta-spec:
+  url: http://module-build.sourceforge.net/META-spec-v1.4.html
+  version: 1.4
+name: POEx-ZMQ
+requires:
+  Exporter::Tiny: 0
+  FFI::Raw: 0
+  List::Objects::Types: 1.002
+  List::Objects::WithUtils: 2.013
+  Math::Int64: 0
+  Moo: 1
+  MooX::late: 0.014
+  POSIX: 0
+  Time::HiRes: 0
+  Try::Tiny: 0
+  Type::Tiny: 0.04
+  perl: v5.10.1
+  strictures: 1
+resources:
+  repository: git://github.com/avenj/poex-zmq.git
+version: 0.000_001
