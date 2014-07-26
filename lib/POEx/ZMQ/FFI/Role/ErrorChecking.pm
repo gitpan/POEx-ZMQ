@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI::Role::ErrorChecking;
-$POEx::ZMQ::FFI::Role::ErrorChecking::VERSION = '0.000_001';
+$POEx::ZMQ::FFI::Role::ErrorChecking::VERSION = '0.000_002';
 use v5.10;
 use Carp 'cluck', 'confess';
 use strictures 1;

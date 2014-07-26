@@ -35,4 +35,4 @@ requires:
   strictures: 1
 resources:
   repository: git://github.com/avenj/poex-zmq.git
-version: 0.000_001
+version: 0.000_002

@@ -1,5 +1,5 @@
 package POEx::ZMQ::Socket;
-$POEx::ZMQ::Socket::VERSION = '0.000_001';
+$POEx::ZMQ::Socket::VERSION = '0.000_002';
 use v5.10;
 use strictures 1;
 use Carp;
@@ -32,8 +32,6 @@ has '+shutdown_signal' => ( default => sub { 'SHUTDOWN_ZMQ' } );
 
 # Pluggable:
 has '+register_prefix' => ( default => sub { 'ZMQ_' } );
-# FIXME default pluggable_type_prefixes?
-#       or do we not really care?
 
 
 has type => (
@@ -109,6 +107,7 @@ sub start {
 sub stop {
   my ($self) = @_;
   $self->call( 'pxz_sock_unwatch' );
+  $self->zsock->set_sock_opt(ZMQ_LINGER, 0);
   $self->_clear_zsock;
   $self->_shutdown_emitter;
 }
@@ -359,7 +358,7 @@ POEx::ZMQ::Socket - A POE-enabled ZeroMQ socket
 
 =head1 DESCRIPTION
 
-An asynchronous L<POE>-powered L<http://www.zeromq.org|ZeroMQ> socket.
+An asynchronous L<POE>-powered L<ZeroMQ|http://www.zeromq.org> socket.
 
 These objects are event emitters powered by L<MooX::Role::POE::Emitter>. That
 means they come with flexible event processing / dispatch / multiplexing
@@ -434,11 +433,15 @@ See L<POEx::ZMQ::FFI::Context/set_ctx_opt> & L<zmq_ctx_set(3)>
 
 =head3 get_socket_opt
 
+  my $last_endpt = $sock->get_sock_opt( ZMQ_LAST_ENDPOINT );
+
 Get socket option values.
 
 See L<POEx::ZMQ::FFI::Socket/get_sock_opt> & L<zmq_getsockopt(3)>.
 
 =head3 set_socket_opt
+
+  $sock->set_sock_opt( ZMQ_LINGER, 0 );
 
 Set socket option values.
 

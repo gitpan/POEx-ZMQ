@@ -28,6 +28,7 @@ my @files = (
     'lib/POEx/ZMQ/Types.pm',
     't/00-report-prereqs.dd',
     't/00-report-prereqs.t',
+    't/00_available.t',
     't/ffi/context.t',
     't/ffi/socket.t',
     't/ffi/utils.t',

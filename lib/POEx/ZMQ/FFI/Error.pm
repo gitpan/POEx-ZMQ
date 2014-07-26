@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI::Error;
-$POEx::ZMQ::FFI::Error::VERSION = '0.000_001';
+$POEx::ZMQ::FFI::Error::VERSION = '0.000_002';
 use strictures 1;
 
 
@@ -26,7 +26,7 @@ sub errstr { shift->message }
 
 =head1 NAME
 
-POEx::ZMQ::FFI::Error - Exceptions thrown by the ZMQ backend
+POEx::ZMQ::FFI::Error
 
 =head1 SYNOPSIS
 

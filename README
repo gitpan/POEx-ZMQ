@@ -41,7 +41,7 @@ SYNOPSIS
       POE::Kernel->run;
 
 DESCRIPTION
-    A POE component providing non-blocking <http://www.zeromq.org|ZeroMQ>
+    A POE component providing non-blocking ZeroMQ <http://www.zeromq.org>
     (versions 3.x & 4.x) integration.
 
     See POEx::ZMQ::Socket for details on using sockets.

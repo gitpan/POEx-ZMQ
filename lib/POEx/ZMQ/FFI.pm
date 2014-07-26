@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI;
-$POEx::ZMQ::FFI::VERSION = '0.000_001';
+$POEx::ZMQ::FFI::VERSION = '0.000_002';
 use v5.10;
 use Carp;
 use strictures 1;
@@ -147,7 +147,7 @@ POEx::ZMQ::FFI - Minimalist ZMQ FFI wrapper for POEx::ZMQ
 
 =head1 DESCRIPTION
 
-This is a minimalist L<FFI::Raw> interface to L<http://www.zeromq.org|ZeroMQ>
+This is a minimalist L<FFI::Raw> interface to L<ZeroMQ|http://www.zeromq.org>
 version 3+, derived from Dylan Cali's L<ZMQ::FFI> (where you probably want to look if
 you're not using L<POEx::ZMQ>.)
 
