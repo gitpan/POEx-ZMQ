@@ -1,5 +1,5 @@
 package POEx::ZMQ;
-$POEx::ZMQ::VERSION = '0.000_002';
+$POEx::ZMQ::VERSION = '0.000_003';
 use Carp;
 use strictures 1;
 
@@ -18,6 +18,8 @@ sub import {
 }
 
 sub context { shift; POEx::ZMQ::FFI::Context->new(@_) }
+
+sub socket { shift; POEx::ZMQ::Socket->new(@_) }
 
 1;
 
@@ -40,7 +42,7 @@ POEx::ZMQ - Asynchronous ZeroMQ sockets for POE
         # Set up a ROUTER; save our Context for creating other sockets later:
         $_[HEAP]->{ctx} = POEx::ZMQ->context;
 
-        $_[HEAP]->{rtr} = POEx::ZMQ::Socket->new(
+        $_[HEAP]->{rtr} = POEx::ZMQ->socket(
           context => $_[HEAP]->{ctx},
           type    => ZMQ_ROUTER,
         );
@@ -101,6 +103,12 @@ Returns a new L<POEx::ZMQ::FFI::Context>. C<@_> is passed through.
 The context object should be shared between sockets belonging to the same
 process; a forked child process should create a new context with its own set
 of sockets.
+
+=head3 socket
+
+  my $sock = POEx::ZMQ->socket(context => $ctx, type => ZMQ_ROUTER);
+
+Returns a new L<POEx::ZMQ::Socket>. C<@_> is passed through.
 
 =head1 AUTHOR
 

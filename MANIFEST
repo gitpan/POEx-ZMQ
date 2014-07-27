@@ -36,4 +36,4 @@ t/release-pod-coverage.t
 t/release-pod-linkcheck.t
 t/release-pod-syntax.t
 t/release-synopsis.t
-tools/zmq_constants.pl
+tools/gen_zmq_constants

@@ -19,6 +19,10 @@ meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
   version: 1.4
 name: POEx-ZMQ
+no_index:
+  directory:
+    - tools
+    - examples
 requires:
   Exporter::Tiny: 0
   FFI::Raw: 0
@@ -35,4 +39,4 @@ requires:
   strictures: 1
 resources:
   repository: git://github.com/avenj/poex-zmq.git
-version: 0.000_002
+version: 0.000_003

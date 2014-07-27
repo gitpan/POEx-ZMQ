@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI;
-$POEx::ZMQ::FFI::VERSION = '0.000_002';
+$POEx::ZMQ::FFI::VERSION = '0.000_003';
 use v5.10;
 use Carp;
 use strictures 1;
@@ -20,8 +20,8 @@ sub find_soname {
   my ($class) = @_;
 
   state $search = array( qw/
-    libzmq.so libzmq.so.3
-    libzmq.dylib libzmq.3.dylib
+    libzmq.so.3 libzmq.so
+    libzmq.3.dylib libzmq.dylib
   / );
 
   my $soname;

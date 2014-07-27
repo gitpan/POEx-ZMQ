@@ -13,6 +13,12 @@
       "version" : "2"
    },
    "name" : "POEx-ZMQ",
+   "no_index" : {
+      "directory" : [
+         "tools",
+         "examples"
+      ]
+   },
    "prereqs" : {
       "configure" : {
          "requires" : {
@@ -71,6 +77,6 @@
          "web" : "http://github.com/avenj/poex-zmq"
       }
    },
-   "version" : "0.000_002"
+   "version" : "0.000_003"
 }
 

@@ -1,6 +1,11 @@
 use Test::More;
 use strict; use warnings FATAL => 'all';
 
+# TODO -
+#   - Test context opt set/get
+#   - Test get_buffered_items
+#   - Probably lots more \o/
+
 use Time::HiRes ();
 
 use List::Objects::WithUtils;
@@ -22,6 +27,7 @@ my $Expected = hash(
   'multipart body ok'   => 1,
   'single-part body ok' => 1,
   'rtr got second msg'  => 1,
+  'set hwm ok'          => 1,
 );
 
 
@@ -36,6 +42,8 @@ POE::Session->create(
       check_if_done
 
       router_req_setup
+
+      test_get_set
 
       zmq_connect_added
       zmq_bind_added
@@ -71,6 +79,10 @@ sub _start {
     context => $_[HEAP]->{ctx},
     type    => ZMQ_REQ,
   )->start;
+
+  ok $_[HEAP]->{req}->type == ZMQ_REQ, 'type attr ok';
+  isa_ok $_[HEAP]->{req}->zsock, 'POEx::ZMQ::FFI::Socket';
+  isa_ok $_[HEAP]->{req}->context, 'POEx::ZMQ::FFI::Context';
   
   $_[KERNEL]->yield( 'router_req_setup' );
 }
@@ -88,6 +100,16 @@ sub router_req_setup {
       $_[OBJECT]->send( 'foo' ) 
     }
   );
+
+  $_[KERNEL]->yield( 'test_get_set' );
+}
+
+sub test_get_set {
+  # int
+  diag "Testing set/get for ZMQ_SNDHWM";
+  $_[HEAP]->{rtr}->set_socket_opt( ZMQ_SNDHWM, 2000 );
+  my $val = $_[HEAP]->{rtr}->get_socket_opt( ZMQ_SNDHWM );
+  $Got->set('set hwm ok' => 1) if $val == 2000;
 }
 
 sub zmq_connect_added {

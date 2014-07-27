@@ -1,5 +1,5 @@
 package POEx::ZMQ::Socket;
-$POEx::ZMQ::Socket::VERSION = '0.000_002';
+$POEx::ZMQ::Socket::VERSION = '0.000_003';
 use v5.10;
 use strictures 1;
 use Carp;
@@ -122,11 +122,23 @@ sub _pxz_emitter_stopped {
 }
 
 
+=for Pod::Coverage (?:get|set)_(?:ctx|sock)_opt
+
+=cut
+
 sub get_context_opt { shift->context->get_ctx_opt(@_) }
 sub set_context_opt { shift->context->set_ctx_opt(@_) }
+{ no warnings 'once';
+  *get_ctx_opt = *get_ctx_opt;
+  *set_ctx_opt = *set_ctx_opt;
+}
 
 sub get_socket_opt { shift->zsock->get_sock_opt(@_) }
 sub set_socket_opt { shift->zsock->set_sock_opt(@_) }
+{ no warnings 'once'; 
+  *get_sock_opt = *get_socket_opt;
+  *set_sock_opt = *set_socket_opt;
+}
 
 sub unbind {
   my $self = shift;
