@@ -44,8 +44,11 @@
             "List::Objects::WithUtils" : "2.013",
             "Math::Int64" : "0",
             "Moo" : "1",
+            "MooX::Role::POE::Emitter" : "0.12",
             "MooX::late" : "0.014",
+            "POE" : "0",
             "POSIX" : "0",
+            "Throwable" : "0",
             "Time::HiRes" : "0",
             "Try::Tiny" : "0",
             "Type::Tiny" : "0.04",
@@ -77,6 +80,6 @@
          "web" : "http://github.com/avenj/poex-zmq"
       }
    },
-   "version" : "0.000_003"
+   "version" : "0.000_004"
 }
 

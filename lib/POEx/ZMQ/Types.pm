@@ -1,5 +1,5 @@
 package POEx::ZMQ::Types;
-$POEx::ZMQ::Types::VERSION = '0.000_003';
+$POEx::ZMQ::Types::VERSION = '0.000_004';
 use strict; use warnings FATAL => 'all';
 
 use Type::Library   -base;
