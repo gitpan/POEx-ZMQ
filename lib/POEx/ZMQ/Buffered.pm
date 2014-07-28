@@ -1,5 +1,5 @@
 package POEx::ZMQ::Buffered;
-$POEx::ZMQ::Buffered::VERSION = '0.000_004';
+$POEx::ZMQ::Buffered::VERSION = '0.000_005';
 use Carp;
 use strictures 1;
 

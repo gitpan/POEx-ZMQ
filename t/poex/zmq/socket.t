@@ -19,15 +19,17 @@ my $endpt = "ipc:///tmp/test-poex-zmq-$$";
 
 my $Got = hash;
 my $Expected = hash(
-  'got connect_added'   => 1,
-  'got bind_added'      => 1,
-  'rtr got 3 items'     => 1,
-  'rtr got id'          => 1,
-  'null part empty'     => 1,
-  'multipart body ok'   => 1,
-  'single-part body ok' => 1,
-  'rtr got second msg'  => 1,
-  'set hwm ok'          => 1,
+  'got connect_added'     => 1,
+  'got bind_added'        => 1,
+  'rtr got 3 items'       => 1,
+  'rtr got id'            => 1,
+  'null part empty'       => 1,
+  'multipart body ok'     => 1,
+  'single-part body ok'   => 1,
+  'rtr got second msg'    => 1,
+  'set hwm ok'            => 1,
+  'get last_endpoint ok'  => 1,
+  'context set/get ok'    => 1,
 );
 
 
@@ -81,6 +83,7 @@ sub _start {
   )->start;
 
   ok $_[HEAP]->{req}->type == ZMQ_REQ, 'type attr ok';
+  ok $_[HEAP]->{req}->zmq_version->string, 'zmq_version ok';
   isa_ok $_[HEAP]->{req}->zsock, 'POEx::ZMQ::FFI::Socket';
   isa_ok $_[HEAP]->{req}->context, 'POEx::ZMQ::FFI::Context';
   
@@ -110,6 +113,15 @@ sub test_get_set {
   $_[HEAP]->{rtr}->set_socket_opt( ZMQ_SNDHWM, 2000 );
   my $val = $_[HEAP]->{rtr}->get_socket_opt( ZMQ_SNDHWM );
   $Got->set('set hwm ok' => 1) if $val == 2000;
+
+  # string
+  my $lastendpt = $_[HEAP]->{req}->get_socket_opt( ZMQ_LAST_ENDPOINT );
+  $Got->set('get last_endpoint ok' => 1) if $lastendpt eq $endpt;
+
+  # context opts
+  $_[HEAP]->{req}->set_context_opt( ZMQ_IO_THREADS, 2 );
+  my $iothreads = $_[HEAP]->{req}->get_context_opt( ZMQ_IO_THREADS );
+  $Got->set('context set/get ok' => 1) if $iothreads == 2;
 }
 
 sub zmq_connect_added {

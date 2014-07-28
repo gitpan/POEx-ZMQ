@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI::Context;
-$POEx::ZMQ::FFI::Context::VERSION = '0.000_004';
+$POEx::ZMQ::FFI::Context::VERSION = '0.000_005';
 use Carp;
 use strictures 1;
 
@@ -107,7 +107,8 @@ sub BUILD {
 }
 
 sub DEMOLISH {
-  my ($self) = @_;
+  my ($self, $gd) = @_;
+  return if $gd;
   return unless $self->_has_ctx_ptr;
   $self->throw_if_error( zmq_ctx_destroy =>
     $self->_ffi->zmq_ctx_destroy( $self->_ctx_ptr )

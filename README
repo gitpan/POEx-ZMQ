@@ -31,6 +31,7 @@ SYNOPSIS
             my $response;
             # ...
 
+            # $_[SENDER] was the ROUTER socket, send a response back:
             $_[KERNEL]->post( $_[SENDER], send_multipart =>
               $id, '', $response
             );

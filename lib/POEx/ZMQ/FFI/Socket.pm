@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI::Socket;
-$POEx::ZMQ::FFI::Socket::VERSION = '0.000_004';
+$POEx::ZMQ::FFI::Socket::VERSION = '0.000_005';
 use v5.10;
 use Carp;
 use strictures 1;
@@ -236,7 +236,9 @@ sub BUILD {
 }
 
 sub DEMOLISH {
-  my ($self) = @_;
+  my ($self, $gd) = @_;
+
+  return if $gd;
 
   $self->warn_if_error( zmq_close =>
     $self->_ffi->zmq_close( $self->_socket_ptr )

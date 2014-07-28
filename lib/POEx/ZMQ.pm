@@ -1,5 +1,5 @@
 package POEx::ZMQ;
-$POEx::ZMQ::VERSION = '0.000_004';
+$POEx::ZMQ::VERSION = '0.000_005';
 use Carp;
 use strictures 1;
 
@@ -61,6 +61,7 @@ POEx::ZMQ - Asynchronous ZeroMQ sockets for POE
         my $response;
         # ...
 
+        # $_[SENDER] was the ROUTER socket, send a response back:
         $_[KERNEL]->post( $_[SENDER], send_multipart =>
           $id, '', $response
         );
