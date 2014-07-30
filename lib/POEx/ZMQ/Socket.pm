@@ -1,5 +1,5 @@
 package POEx::ZMQ::Socket;
-$POEx::ZMQ::Socket::VERSION = '0.000_005';
+$POEx::ZMQ::Socket::VERSION = '0.000_006';
 use v5.10;
 use strictures 1;
 use Carp;
@@ -41,13 +41,28 @@ has type => (
   coerce    => 1,
 );
 
-
 has context => (
   lazy      => 1,
   is        => 'ro',
   isa       => ZMQContext,
   builder   => sub { POEx::ZMQ::FFI::Context->new },
 );
+
+has max_queue_size => (
+  lazy      => 1,
+  is        => 'ro',
+  isa       => Int,
+  builder   => sub { 0 },
+);
+
+has max_queue_action => (
+  lazy      => 1,
+  is        => 'ro',
+  # A default action or a CodeRef passed the buffer ArrayObj ->
+  isa       => (Enum[qw/drop warn die/] | CodeRef),
+  builder   => sub { 'die' },
+);
+
 
 
 has zsock => (
@@ -181,8 +196,56 @@ sub disconnect {
 }
 sub _px_disconnect { $_[OBJECT]->disconnect(@_[ARG0 .. $#_]) }
 
+
+sub _message_not_sendable {
+  my ($self, $msg, $flags, $is_multipart) = @_;
+
+  return unless $self->max_queue_size > 0
+    and $self->_zsock_buf->count == $self->max_queue_size;
+
+  my $action = $self->max_queue_action;
+
+  QUEUE_FILL_ACTION: {
+    if (ref $action eq 'CODE') {
+      my $buf = (blessed $msg && $msg->isa('POEx::ZMQ::Buffered')) ? $msg
+        : POEx::ZMQ::Buffered->new(
+          item_type => ($is_multipart ? 'multipart' : 'single'),
+          item      => $msg,
+          ( defined $flags ? (flags => $flags) : () ),
+        );
+
+      if ( $action->($buf, $self->_zsock_buf) ) {
+        # coderef action can return true to cause an event check ->
+        $self->yield('pxz_ready')
+      }
+
+      return 1
+    }
+
+    if ($action eq 'die') {
+      my $id = $self->alias;
+      confess "Attempted to send on socket with filled queue (session $id)" 
+    }
+
+    if ($action eq 'warn') {
+      my $id = $self->alias;
+      warn "WARNING; send queue filled (session $id), dropping message\n";
+      return 1
+    }
+
+    if ($action eq 'drop') {
+      return 1
+    }
+
+  } # QUEUE_FILL_ACTION
+
+  1
+}
+
 sub send {
   my ($self, $msg, $flags) = @_;
+
+  return if $self->_message_not_sendable($msg, $flags);
 
   if (blessed $msg && $msg->isa('POEx::ZMQ::Buffered')) {
     $self->_zsock_buf->push($msg);
@@ -202,6 +265,8 @@ sub _px_send { $_[OBJECT]->send(@_[ARG0 .. $#_]) }
 
 sub send_multipart {
   my ($self, $parts, $flags) = @_;
+
+  return if $self->_message_not_sendable($parts, $flags, 'IS_MULTIPART');
 
   $self->_zsock_buf->push(
     POEx::ZMQ::Buffered->new(
@@ -385,6 +450,47 @@ B<Required>; the socket type, as a constant.
 See L<zmq_socket(3)> for details on socket types.
 
 See L<POEx::ZMQ::Constants> for a ZeroMQ constant exporter.
+
+=head3 max_queue_size
+
+Socket types that would normally block or return C<EFSM> (for example,
+out-of-order REP/REQ communication) will queue messages
+instead; C<max_queue_size> is the maximum number of messages queued
+application-side before L</max_queue_action> is invoked.
+
+This is not related to messages queued on the ZeroMQ side; see
+L<zmq_socket(3)> for details on socket behavior.
+
+Defaults to 0 (unlimited)
+
+=head3 max_queue_action
+
+The action to take during L</send> invocation when the application-side
+outgoing message queue reaches L</max_queue_size>.
+
+If set to B<drop>, new messages will be dropped.
+
+If set to B<warn>, a warning will be issued and new messages will be dropped.
+
+If set to B<die>, a stack trace is thrown.
+
+If set to a coderef:
+
+  max_queue_action => sub {
+    my ($buf_item, $queue) = @_;
+    # Drop old and try again, for example:
+    $queue->shift;
+    1
+  },
+
+... the subroutine is invoked and passed the
+L<POEx::ZMQ::Buffered> object for the message and the current application-side
+outgoing message queue as a L<List::Objects::WithUtils::Array> (respectively).
+This can be used to manually munge your outgoing queue yourself or perform
+some other action; if the given subroutine returns a boolean true value, another
+socket write will be attempted after the subroutine returns.
+
+Defaults to C<die>.
 
 =head3 context
 

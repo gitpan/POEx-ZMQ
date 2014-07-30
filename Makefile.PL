@@ -48,9 +48,10 @@ my %WriteMakefileArgs = (
     "List::Util" => 0,
     "Scalar::Util" => 0,
     "Test::More" => "0.96",
+    "Test::TCP" => 0,
     "version" => "0.77"
   },
-  "VERSION" => "0.000_005",
+  "VERSION" => "0.000_006",
   "test" => {
     "TESTS" => "t/*.t t/ffi/*.t t/poex/*.t t/poex/zmq/*.t"
   }
@@ -73,6 +74,7 @@ my %FallbackPrereqs = (
   "POSIX" => 0,
   "Scalar::Util" => 0,
   "Test::More" => "0.96",
+  "Test::TCP" => 0,
   "Throwable" => 0,
   "Time::HiRes" => 0,
   "Try::Tiny" => 0,

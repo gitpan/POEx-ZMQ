@@ -68,6 +68,7 @@
             "List::Util" : "0",
             "Scalar::Util" : "0",
             "Test::More" : "0.96",
+            "Test::TCP" : "0",
             "version" : "0.77"
          }
       }
@@ -80,6 +81,6 @@
          "web" : "http://github.com/avenj/poex-zmq"
       }
    },
-   "version" : "0.000_005"
+   "version" : "0.000_006"
 }
 
