@@ -45,7 +45,10 @@ DESCRIPTION
     A POE component providing non-blocking ZeroMQ <http://www.zeromq.org>
     (versions 3.x & 4.x) integration.
 
-    See POEx::ZMQ::Socket for details on using sockets.
+    See POEx::ZMQ::Socket for details on using these sockets.
+
+    See the zguide <http://zguide.zeromq.org> for more on using ZeroMQ in
+    general.
 
     Each ZeroMQ socket is an event emitter powered by
     MooX::Role::POE::Emitter; the documentation for that distribution is

@@ -4,7 +4,7 @@
       "Jon Portnoy <avenj@cobaltirc.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Dist::Zilla version 5.019, CPAN::Meta::Converter version 2.142060",
+   "generated_by" : "Dist::Zilla version 5.020, CPAN::Meta::Converter version 2.142060",
    "license" : [
       "perl_5"
    ],
@@ -23,7 +23,7 @@
       "configure" : {
          "requires" : {
             "Devel::CheckLib" : "0",
-            "ExtUtils::MakeMaker" : "6.30"
+            "ExtUtils::MakeMaker" : "0"
          }
       },
       "develop" : {
@@ -40,6 +40,7 @@
          "requires" : {
             "Exporter::Tiny" : "0",
             "FFI::Raw" : "0",
+            "Import::Into" : "0",
             "List::Objects::Types" : "1.002",
             "List::Objects::WithUtils" : "2.013",
             "Math::Int64" : "0",
@@ -68,12 +69,11 @@
             "List::Util" : "0",
             "Scalar::Util" : "0",
             "Test::More" : "0.96",
-            "Test::TCP" : "0",
             "version" : "0.77"
          }
       }
    },
-   "release_status" : "testing",
+   "release_status" : "stable",
    "resources" : {
       "repository" : {
          "type" : "git",
@@ -81,6 +81,6 @@
          "web" : "http://github.com/avenj/poex-zmq"
       }
    },
-   "version" : "0.000_006"
+   "version" : "0.001001"
 }
 

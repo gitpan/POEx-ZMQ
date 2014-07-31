@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI::Socket;
-$POEx::ZMQ::FFI::Socket::VERSION = '0.000_006';
+$POEx::ZMQ::FFI::Socket::VERSION = '0.001001';
 use v5.10;
 use Carp;
 use strictures 1;
@@ -7,7 +7,7 @@ use strictures 1;
 require bytes;
 require IO::Handle;
 
-use Time::HiRes;
+use Time::HiRes ();
 
 use List::Objects::WithUtils;
 

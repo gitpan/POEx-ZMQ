@@ -1,21 +1,15 @@
 use Test::More;
 use strict; use warnings FATAL => 'all';
 
-# TODO -
-#   - Test context opt set/get
-#   - Test get_buffered_items
-#   - Probably lots more \o/
-
 use Time::HiRes ();
 
 use List::Objects::WithUtils;
 
 use POE;
 use POEx::ZMQ;
-use POEx::ZMQ::Constants -all;
 
-use Test::TCP 'empty_port';
-my $endpt = 'tcp://127.0.0.1:'.empty_port;
+
+my $endpt = "ipc:///tmp/test-poex-ffi-$$";
 
 
 my $Got = hash;

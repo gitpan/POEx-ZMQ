@@ -1,7 +1,9 @@
 package POEx::ZMQ;
-$POEx::ZMQ::VERSION = '0.000_006';
+$POEx::ZMQ::VERSION = '0.001001';
 use Carp;
 use strictures 1;
+
+use Import::Into;
 
 use POEx::ZMQ::FFI::Context;
 
@@ -76,7 +78,10 @@ POEx::ZMQ - Asynchronous ZeroMQ sockets for POE
 A L<POE> component providing non-blocking L<ZeroMQ|http://www.zeromq.org>
 (versions 3.x & 4.x) integration.
 
-See L<POEx::ZMQ::Socket> for details on using sockets.
+See L<POEx::ZMQ::Socket> for details on using these sockets.
+
+See the L<zguide|http://zguide.zeromq.org> for more on using ZeroMQ in
+general.
 
 Each ZeroMQ socket is an event emitter powered by L<MooX::Role::POE::Emitter>;
 the documentation for that distribution is likely to be helpful.

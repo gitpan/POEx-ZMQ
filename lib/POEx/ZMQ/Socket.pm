@@ -1,5 +1,5 @@
 package POEx::ZMQ::Socket;
-$POEx::ZMQ::Socket::VERSION = '0.000_006';
+$POEx::ZMQ::Socket::VERSION = '0.001001';
 use v5.10;
 use strictures 1;
 use Carp;
@@ -359,8 +359,12 @@ sub _pxz_nb_write {
       my $maybe_fatal = $_;
       if (blessed $maybe_fatal) {
         my $errno = $maybe_fatal->errno;
-        if ($errno == EAGAIN || $errno == EINTR || $errno == EFSM) {
+        if ($errno == EAGAIN || $errno == EINTR) {
           $self->_zsock_buf->unshift($msg);
+        } elsif ($errno == EFSM) {
+          warn "Requeuing message on bad socket state (EFSM) -- ",
+               "your app is probably misusing a socket!";
+          $self->_zsock_buf->unshift($msg); 
         } else {
           $send_error = $maybe_fatal->errstr;
         }
@@ -371,8 +375,6 @@ sub _pxz_nb_write {
   }
 
   confess $send_error if defined $send_error;
-
-  # FIXME support for a max per-buffered-item retry limit
 
   $self->yield('pxz_ready');
 }

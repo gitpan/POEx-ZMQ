@@ -8,13 +8,12 @@ build_requires:
   List::Util: 0
   Scalar::Util: 0
   Test::More: 0.96
-  Test::TCP: 0
   version: 0.77
 configure_requires:
   Devel::CheckLib: 0
-  ExtUtils::MakeMaker: 6.30
+  ExtUtils::MakeMaker: 0
 dynamic_config: 0
-generated_by: 'Dist::Zilla version 5.019, CPAN::Meta::Converter version 2.142060'
+generated_by: 'Dist::Zilla version 5.020, CPAN::Meta::Converter version 2.142060'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -27,6 +26,7 @@ no_index:
 requires:
   Exporter::Tiny: 0
   FFI::Raw: 0
+  Import::Into: 0
   List::Objects::Types: 1.002
   List::Objects::WithUtils: 2.013
   Math::Int64: 0
@@ -43,4 +43,4 @@ requires:
   strictures: 1
 resources:
   repository: git://github.com/avenj/poex-zmq.git
-version: 0.000_006
+version: 0.001001

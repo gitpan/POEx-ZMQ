@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI;
-$POEx::ZMQ::FFI::VERSION = '0.000_006';
+$POEx::ZMQ::FFI::VERSION = '0.001001';
 use v5.10;
 use Carp;
 use strictures 1;
