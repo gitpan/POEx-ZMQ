@@ -1,5 +1,5 @@
 package POEx::ZMQ::Types;
-$POEx::ZMQ::Types::VERSION = '0.001001';
+$POEx::ZMQ::Types::VERSION = '0.001002';
 use strict; use warnings FATAL => 'all';
 
 use Type::Library   -base;
@@ -47,6 +47,8 @@ A L<POEx::ZMQ::FFI::Socket> object.
 =head2 ZMQSocketType
 
 A ZMQ socket type constant, such as those exported by L<POEx::ZMQ::Constants>.
+
+Can be coerced from a string.
 
 =head1 AUTHOR
 

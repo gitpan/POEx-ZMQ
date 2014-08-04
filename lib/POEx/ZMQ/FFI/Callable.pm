@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI::Callable;
-$POEx::ZMQ::FFI::Callable::VERSION = '0.001001';
+$POEx::ZMQ::FFI::Callable::VERSION = '0.001002';
 use Carp ();
 use Scalar::Util ();
 use strictures 1;
@@ -44,7 +44,7 @@ sub AUTOLOAD {
   Carp::confess "Can't locate object method '$method'"
     unless exists $self->{$method};
 
-  $self->{$method}->(@_)
+  $self->{$method}->call(@_)
 }
 
 sub DESTROY {}

@@ -1,10 +1,8 @@
 package POEx::ZMQ::Socket;
-$POEx::ZMQ::Socket::VERSION = '0.001001';
+$POEx::ZMQ::Socket::VERSION = '0.001002';
 use v5.10;
 use strictures 1;
 use Carp;
-
-use Scalar::Util 'blessed';
 
 use List::Objects::WithUtils;
 
@@ -46,6 +44,13 @@ has context => (
   is        => 'ro',
   isa       => ZMQContext,
   builder   => sub { POEx::ZMQ::FFI::Context->new },
+);
+
+has ipv6    => (
+  lazy      => 1,
+  is        => 'ro',
+  isa       => Bool,
+  builder   => sub { 0 },
 );
 
 has max_queue_size => (
@@ -120,13 +125,21 @@ sub start {
 sub stop {
   my ($self) = @_;
   $self->call( 'pxz_sock_unwatch' );
-  $self->zsock->set_sock_opt(ZMQ_LINGER, 0);
+  $self->set_sock_opt(ZMQ_LINGER, 0);
   $self->_clear_zsock;
   $self->_shutdown_emitter;
 }
 
 sub _pxz_emitter_started {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
+
+  if ($self->ipv6) {
+    $self->set_sock_opt(
+      $self->context->get_zmq_version->string =~ /^(4|3.3)/ ?
+        (ZMQ_IPV6, 1) : (ZMQ_IPV4ONLY, 0)
+    )
+  }
+
   $self->call( 'pxz_sock_watch' );
 }
 
@@ -205,39 +218,36 @@ sub _message_not_sendable {
 
   my $action = $self->max_queue_action;
 
-  QUEUE_FILL_ACTION: {
-    if (ref $action eq 'CODE') {
-      my $buf = (blessed $msg && $msg->isa('POEx::ZMQ::Buffered')) ? $msg
-        : POEx::ZMQ::Buffered->new(
-          item_type => ($is_multipart ? 'multipart' : 'single'),
-          item      => $msg,
-          ( defined $flags ? (flags => $flags) : () ),
-        );
+  if (ref $action eq 'CODE') {
+    my $buf = (blessed $msg && $msg->isa('POEx::ZMQ::Buffered')) ? $msg
+      : POEx::ZMQ::Buffered->new(
+        item_type => ($is_multipart ? 'multipart' : 'single'),
+        item      => $msg,
+        ( defined $flags ? (flags => $flags) : () ),
+      );
 
-      if ( $action->($buf, $self->_zsock_buf) ) {
-        # coderef action can return true to cause an event check ->
-        $self->yield('pxz_ready')
-      }
-
-      return 1
+    if ( $action->($buf, $self->_zsock_buf) ) {
+      # coderef action can return true to cause an event check ->
+      $self->yield('pxz_ready')
     }
 
-    if ($action eq 'die') {
-      my $id = $self->alias;
-      confess "Attempted to send on socket with filled queue (session $id)" 
-    }
+    return 1
+  }
 
-    if ($action eq 'warn') {
-      my $id = $self->alias;
-      warn "WARNING; send queue filled (session $id), dropping message\n";
-      return 1
-    }
+  if ($action eq 'die') {
+    my $id = $self->alias;
+    confess "Attempted to send on socket with filled queue (session $id)" 
+  }
 
-    if ($action eq 'drop') {
-      return 1
-    }
+  if ($action eq 'warn') {
+    my $id = $self->alias;
+    warn "WARNING; send queue filled (session $id), dropping message\n";
+    return 1
+  }
 
-  } # QUEUE_FILL_ACTION
+  if ($action eq 'drop') {
+    return 1
+  }
 
   1
 }
@@ -295,6 +305,19 @@ sub _pxz_sock_unwatch {
 sub _pxz_ready {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
 
+  # Level-triggered behavior is annoying; this select ought be triggered when
+  # any events happen (which might or might not pertain to us). We might not
+  # be notified if state changes as a result of something we do. 
+  # At the moment:
+  #  - Try to write pending
+  #    - Return if we have nothing queued
+  #    - yield another pxz_ready if successful or EAGAIN, EINTR, EFSM
+  #  - Try to read pending
+  #    - Return if ZeroMQ has nothing queued
+  #    - yield another pxz_ready if successful or EAGAIN, EINTR
+  # Probably we need smarter management of pxz_ready events; as it is, we're
+  # stuck in a yield() loop until something happens if queuing app-side while
+  # trying to write against a blocked socket.
   $self->call('pxz_nb_write');
   $self->call('pxz_nb_read');
 }
@@ -380,6 +403,14 @@ sub _pxz_nb_write {
 }
 
 # FIXME monitor support
+#  - FFI::Socket method that calls zmq_socket_monitor
+#  - spawn a child POEx::ZMQ::Socket for our side of ZMQ_PAIR,
+#     give it a special event prefix
+#  - accept & unpack recv_multipart events from the PAIR sock
+#     first frame is a 16-bit event id matching a const,
+#      prepending a 32-bit event value
+#     second frame is the affected endpoint string
+#  - switch emitting more useful events
 
 1;
 
@@ -452,6 +483,14 @@ B<Required>; the socket type, as a constant.
 See L<zmq_socket(3)> for details on socket types.
 
 See L<POEx::ZMQ::Constants> for a ZeroMQ constant exporter.
+
+=head3 ipv6
+
+If set to true, IPv6 support is enabled via the appropriate socket option
+(C<ZMQ_IPV4ONLY> or C<ZMQ_IPV6> depending on your ZeroMQ version) when the
+emitter is started.
+
+Defaults to false.
 
 =head3 max_queue_size
 

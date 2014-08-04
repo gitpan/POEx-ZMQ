@@ -1,5 +1,5 @@
 package POEx::ZMQ;
-$POEx::ZMQ::VERSION = '0.001001';
+$POEx::ZMQ::VERSION = '0.001002';
 use Carp;
 use strictures 1;
 
