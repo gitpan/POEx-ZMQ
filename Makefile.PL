@@ -8,7 +8,7 @@ check_lib_or_exit(
 use strict;
 use warnings;
 
-use 5.010001;
+use 5.016000;
 
 use ExtUtils::MakeMaker ;
 
@@ -32,6 +32,7 @@ my %WriteMakefileArgs = (
     "List::Objects::Types" => "1.002",
     "List::Objects::WithUtils" => "2.013",
     "Math::Int64" => 0,
+    "Module::Runtime" => 0,
     "Moo" => 1,
     "MooX::Role::POE::Emitter" => "0.12",
     "MooX::late" => "0.014",
@@ -41,6 +42,7 @@ my %WriteMakefileArgs = (
     "Time::HiRes" => 0,
     "Try::Tiny" => 0,
     "Type::Tiny" => "0.04",
+    "namespace::clean" => 0,
     "strictures" => 1
   },
   "TEST_REQUIRES" => {
@@ -51,7 +53,7 @@ my %WriteMakefileArgs = (
     "Test::More" => "0.96",
     "version" => "0.77"
   },
-  "VERSION" => "0.001002",
+  "VERSION" => "0.002001",
   "test" => {
     "TESTS" => "t/*.t t/ffi/*.t t/poex/*.t t/poex/zmq/*.t"
   }
@@ -68,6 +70,7 @@ my %FallbackPrereqs = (
   "List::Objects::WithUtils" => "2.013",
   "List::Util" => 0,
   "Math::Int64" => 0,
+  "Module::Runtime" => 0,
   "Moo" => 1,
   "MooX::Role::POE::Emitter" => "0.12",
   "MooX::late" => "0.014",
@@ -79,6 +82,7 @@ my %FallbackPrereqs = (
   "Time::HiRes" => 0,
   "Try::Tiny" => 0,
   "Type::Tiny" => "0.04",
+  "namespace::clean" => 0,
   "strictures" => 1,
   "version" => "0.77"
 );

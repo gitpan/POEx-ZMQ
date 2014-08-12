@@ -9,13 +9,12 @@ SYNOPSIS
       POE::Session->create(
         inline_states => +{
           _start => sub {
-            # Set up a ROUTER; save our Context for creating other sockets later:
-            $_[HEAP]->{ctx} = POEx::ZMQ->context;
+            # Set up a ROUTER
+            # Save our POEx::ZMQ for creating other sockets w/ shared context later:
+            my $zmq = POEx::ZMQ->new;
+            $_[HEAP]->{zeromq} = $zmq;
 
-            $_[HEAP]->{rtr} = POEx::ZMQ->socket(
-              context => $_[HEAP]->{ctx},
-              type    => ZMQ_ROUTER,
-            );
+            $_[HEAP]->{rtr} = $zmq->socket( type => ZMQ_ROUTER );
 
             $_[HEAP]->{rtr}->start;
 
@@ -28,8 +27,7 @@ SYNOPSIS
             my $parts = $_[ARG0];
             my ($id, undef, $content) = $parts->all;
 
-            my $response;
-            # ...
+            my $response = 'foo';
 
             # $_[SENDER] was the ROUTER socket, send a response back:
             $_[KERNEL]->post( $_[SENDER], send_multipart =>
@@ -67,19 +65,49 @@ DESCRIPTION
     Importing this package brings in the full set of POEx::ZMQ::Constants,
     and ensures POEx::ZMQ::Socket is loaded.
 
+   new
+      my $zmq = POEx::ZMQ->new;
+      # POEx::ZMQ::FFI::Context obj is automatically shared:
+      my $frontend = $zmq->socket(type => ZMQ_ROUTER);
+      my $backend  = $zmq->socket(type => ZMQ_ROUTER);
+
+    This class can be instanced, in which case it will hang on to the first
+    "context" created (possibly implicitly via a call to "socket") and use
+    that POEx::ZMQ::FFI::Context instance for all calls to "socket".
+
    context
       my $ctx = POEx::ZMQ->context(max_sockets => 512);
 
-    Returns a new POEx::ZMQ::FFI::Context. @_ is passed through.
+    If called as a class method, returns a new POEx::ZMQ::FFI::Context.
+
+      my $zmq = POEx::ZMQ->new;
+      my $ctx = $zmq->context;
+
+    If called as an object method, returns the context object belonging to
+    the instance. If none currently exists, a new POEx::ZMQ::FFI::Context is
+    created (and preserved for use during socket creation; see "socket").
+
+    If creating a new context object, @_ is passed through to the
+    POEx::ZMQ::FFI::Context constructor.
 
     The context object should be shared between sockets belonging to the
-    same process; a forked child process should create a new context with
+    same process -- a forked child process must create a new context with
     its own set of sockets.
 
    socket
       my $sock = POEx::ZMQ->socket(context => $ctx, type => ZMQ_ROUTER);
 
-    Returns a new POEx::ZMQ::Socket. @_ is passed through.
+    If called as a class method, returns a new POEx::ZMQ::Socket using
+    either a provided "context" or, if missing from arguments, a
+    freshly-created POEx::ZMQ::FFI::Context.
+
+      my $sock = $zmq->socket(type => ZMQ_ROUTER);
+
+    If called as an object method, returns a new POEx::ZMQ::Socket that uses
+    the POEx::ZMQ::FFI::Context object belonging to the instance; see
+    "context".
+
+    @_ is passed through to the POEx::ZMQ::Socket constructor.
 
 AUTHOR
     Jon Portnoy <avenj@cobaltirc.org>

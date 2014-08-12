@@ -23,6 +23,7 @@ do { my $x = {
                                       'List::Objects::Types' => '1.002',
                                       'List::Objects::WithUtils' => '2.013',
                                       'Math::Int64' => '0',
+                                      'Module::Runtime' => '0',
                                       'Moo' => '1',
                                       'MooX::Role::POE::Emitter' => '0.12',
                                       'MooX::late' => '0.014',
@@ -32,7 +33,8 @@ do { my $x = {
                                       'Time::HiRes' => '0',
                                       'Try::Tiny' => '0',
                                       'Type::Tiny' => '0.04',
-                                      'perl' => 'v5.10.1',
+                                      'namespace::clean' => '0',
+                                      'perl' => 'v5.16.0',
                                       'strictures' => '1'
                                     }
                     },

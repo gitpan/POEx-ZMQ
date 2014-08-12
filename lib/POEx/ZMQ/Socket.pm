@@ -1,5 +1,5 @@
 package POEx::ZMQ::Socket;
-$POEx::ZMQ::Socket::VERSION = '0.001002';
+$POEx::ZMQ::Socket::VERSION = '0.002001';
 use v5.10;
 use strictures 1;
 use Carp;
@@ -73,7 +73,7 @@ has max_queue_action => (
 has zsock => (
   lazy      => 1,
   is        => 'ro',
-  isa       => ZMQSocket,
+  isa       => ZMQSocketBackend,
   clearer   => '_clear_zsock',
   builder   => sub {
     my ($self) = @_;
@@ -87,7 +87,7 @@ has _zsock_buf => (
   isa       => ArrayObj,
   coerce    => 1,
   writer    => '_set_zsock_buf',
-  builder   => sub { [] },
+  builder   => sub { array },
 );
 
 sub get_buffered_items { shift->_zsock_buf->copy }
@@ -648,7 +648,8 @@ A L</disconnect_issued> event is emitted for each removed endpoint.
 
 Send a single-part message (without blocking).
 
-=for comment FIXME document queuing behavior etc
+Sending will not block, regardless of the typical behavior of the ZeroMQ
+socket. See L</max_queue_size> for details on queuing behavior.
 
 =head3 send_multipart
 
@@ -658,7 +659,8 @@ Send a single-part message (without blocking).
 
 Send a multi-part message.
 
-=for comment FIXME document queuing behavior
+Applies the same application-side queuing behavior as L</send>; see
+L</max_queue_size>.
 
 =head2 ACCEPTED EVENTS
 
