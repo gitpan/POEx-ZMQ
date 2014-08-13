@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI::Context;
-$POEx::ZMQ::FFI::Context::VERSION = '0.002001';
+$POEx::ZMQ::FFI::Context::VERSION = '0.002002';
 use Carp;
 use strictures 1;
 
@@ -153,7 +153,7 @@ sub set_ctx_opt {
 
 =head1 NAME
 
-POEx::ZMQ::FFI::Context
+POEx::ZMQ::FFI::Context - Backend ZeroMQ context objects for POEx::ZMQ
 
 =head1 SYNOPSIS
 
