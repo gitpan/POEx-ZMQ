@@ -1,5 +1,5 @@
 package POEx::ZMQ::Types;
-$POEx::ZMQ::Types::VERSION = '0.002002';
+$POEx::ZMQ::Types::VERSION = '0.003001';
 use strict; use warnings FATAL => 'all';
 
 use Type::Library   -base;
@@ -12,6 +12,10 @@ use POEx::ZMQ::Constants ();
 
 declare ZMQContext =>
   as InstanceOf['POEx::ZMQ::FFI::Context'];
+
+  # FIXME besides being lame, not very future-proof:
+declare ZMQEndpoint =>
+  as StrMatch[ qr{^(?:tcp|ipc|inproc|e?pgm)://\S+} ];
 
 declare ZMQSocketBackend =>
   as InstanceOf['POEx::ZMQ::FFI::Socket'];
@@ -69,6 +73,11 @@ L<Type::Tiny>-based types for L<POEx::ZMQ>.
 =head2 ZMQContext
 
 A L<POEx::ZMQ::FFI::Context> object.
+
+=head2 ZMQEndpoint
+
+A string that looks like a properly-formed ZeroMQ endpoint using a known
+transport.
 
 =head2 ZMQSocket
 

@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI::Error;
-$POEx::ZMQ::FFI::Error::VERSION = '0.002002';
+$POEx::ZMQ::FFI::Error::VERSION = '0.003001';
 use strictures 1;
 
 
@@ -17,7 +17,7 @@ has errno => (
   is        => 'ro',
 );
 
-sub errstr { shift->message }
+sub errstr { $_[0]->message }
 
 
 1;

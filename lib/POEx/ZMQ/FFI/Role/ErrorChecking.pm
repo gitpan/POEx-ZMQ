@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI::Role::ErrorChecking;
-$POEx::ZMQ::FFI::Role::ErrorChecking::VERSION = '0.002002';
+$POEx::ZMQ::FFI::Role::ErrorChecking::VERSION = '0.003001';
 use v5.10;
 use Carp 'cluck', 'confess';
 use strictures 1;
@@ -59,19 +59,14 @@ sub _build_zmq_error {
 }
 
 sub throw_zmq_error {
-  shift->_build_zmq_error(@_)->throw
+  $_[0]->_build_zmq_error(@_[1 .. $#_])->throw
 }
 
 sub throw_if_error {
-  my ($self, $call, $rc) = @_;
   confess "Expected function name and return code"
-    unless defined $call and defined $rc;
-
-  if ($rc == -1) {
-    $self->throw_zmq_error($call)
-  }
-
-  $self
+    unless defined $_[1] and defined $_[2];
+  $_[0]->throw_zmq_error($_[1]) if $_[2] == -1;
+  $_[0]
 }
 
 sub warn_if_error {

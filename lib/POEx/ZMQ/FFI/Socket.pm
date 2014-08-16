@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI::Socket;
-$POEx::ZMQ::FFI::Socket::VERSION = '0.002002';
+$POEx::ZMQ::FFI::Socket::VERSION = '0.003001';
 use v5.10;
 use Carp;
 use strictures 1;
@@ -10,6 +10,7 @@ require IO::Handle;
 use Time::HiRes ();
 
 use List::Objects::WithUtils;
+use List::Objects::WithUtils::Array;
 
 use Types::Standard  -types;
 use POEx::ZMQ::Types -types;
@@ -213,12 +214,11 @@ has _stored_handle => (
   writer    => '_set_stored_handle',
   clearer   => '_clear_stored_handle',
   builder    => sub {
-    my $fno = shift->get_sock_opt( ZMQ_FD );
-    IO::Handle->new_from_fd( $fno, 'r' );
+    IO::Handle->new_from_fd( $_[0]->get_sock_opt(ZMQ_FD), 'r' );
   },
 );
 
-sub get_handle { shift->_stored_handle }
+sub get_handle { $_[0]->_stored_handle }
 
 
 with 'POEx::ZMQ::FFI::Role::ErrorChecking';
@@ -367,9 +367,7 @@ sub connect {
 
   $self->throw_if_error( zmq_connect =>
     $self->_ffi->zmq_connect( $self->_socket_ptr, $endpoint )
-  );
-
-  $self
+  )
 }
 
 sub disconnect {
@@ -378,9 +376,7 @@ sub disconnect {
 
   $self->throw_if_error( zmq_disconnect =>
     $self->_ffi->zmq_disconnect( $self->_socket_ptr, $endpoint )
-  );
-
-  $self
+  )
 }
 
 sub bind {
@@ -389,9 +385,7 @@ sub bind {
 
   $self->throw_if_error( zmq_bind =>
     $self->_ffi->zmq_bind( $self->_socket_ptr, $endpoint )
-  );
-
-  $self
+  )
 }
 
 sub unbind {
@@ -400,82 +394,58 @@ sub unbind {
 
   $self->throw_if_error( zmq_unbind =>
     $self->_ffi->zmq_unbind( $self->_socket_ptr, $endpoint )
-  );
-
-  $self
+  )
 }
 
 sub send {
-  my ($self, $msg, $flags) = @_;
-  $flags //= 0;
-  my $len = bytes::length($msg);
-  $self->throw_if_error( zmq_send =>
-    $self->_ffi->zmq_send( $self->_socket_ptr, $msg, $len, $flags )
-  );
-
-  $self
+  my $len = bytes::length($_[1]);
+  $_[0]->throw_if_error( zmq_send =>
+    $_[0]->_ffi->zmq_send( $_[0]->_socket_ptr, $_[1], $len, ($_[2] // 0 ) )
+  )
 }
 
 sub send_multipart {
-  my ($self, $parts, $flags) = @_;
   confess "Expected an ARRAY of message parts"
-    unless Scalar::Util::reftype($parts) eq 'ARRAY'
-    and @$parts;
-
-  $self->send( $parts->[$_], ZMQ_SNDMORE ) for 0 .. ($#$parts - 1);
-  $self->send( $parts->[-1], $flags );
+    unless Scalar::Util::reftype($_[1]) eq 'ARRAY'
+    and @{ $_[1] };
+  $_[0]->send( $_[1]->[$_], ZMQ_SNDMORE ) for 0 .. ($#{ $_[1] } - 1);
+  $_[0]->send( $_[1]->[-1], ($_[2] // 0) );
 }
 
 sub recv {
-  my ($self, $flags) = @_;
-  $flags //= 0;
+  my $self = $_[0];
+  my ($ffi, $zmsg_ptr, $zmsg_len) = ( $self->_ffi, FFI::Raw::memptr(40) );
 
-  my $zmsg_ptr = FFI::Raw::memptr(40);
-  $self->throw_if_error( zmq_msg_init => 
-    $self->_ffi->zmq_msg_init($zmsg_ptr) 
-  );
-
-  my $zmsg_len;
-  $self->throw_if_error( zmq_msg_recv =>
-    (
-      $zmsg_len = $self->_ffi->zmq_msg_recv(
-        $zmsg_ptr, $self->_socket_ptr, $flags
-      )
+  $self->throw_if_error( zmq_msg_init => $ffi->zmq_msg_init($zmsg_ptr) );
+  $self->throw_if_error( zmq_msg_recv => (
+    $zmsg_len =
+      $ffi->zmq_msg_recv( $zmsg_ptr, $self->_socket_ptr, ($_[1] // 0) )
     )
   );
 
-  my $ret;
   if ($zmsg_len) {
-    my $data_ptr     = $self->_ffi->zmq_msg_data($zmsg_ptr);
     my $content_ptr  = FFI::Raw::memptr($zmsg_len);
-    $self->_ffi->memcpy( $content_ptr, $data_ptr, $zmsg_len );
-    $ret = $content_ptr->tostr($zmsg_len);
+    $ffi->memcpy( $content_ptr, $ffi->zmq_msg_data($zmsg_ptr), $zmsg_len );
+    $ffi->zmq_msg_close($zmsg_ptr);
+    return $content_ptr->tostr($zmsg_len);
   } else {
-    $ret = ''
+    $ffi->zmq_msg_close($zmsg_ptr);
+    return ''
   }
-
-  $self->_ffi->zmq_msg_close($zmsg_ptr);
-
-  $ret
 }
 
 sub recv_multipart {
-  my ($self, $flags) = @_;
-
-  my @parts = $self->recv($flags);
-  push @parts, $self->recv($flags) while $self->get_sock_opt(ZMQ_RCVMORE);
-
-  array(@parts)
+  my @parts = $_[0]->recv($_[1]);
+  push @parts, $_[0]->recv($_[1]) while $_[0]->get_sock_opt(ZMQ_RCVMORE);
+  List::Objects::WithUtils::Array->new(@parts)
 }
 
 sub has_event_pollin {
-  my ($self) = @_;
-  !! ( $self->get_sock_opt(ZMQ_EVENTS) & ZMQ_POLLIN )
+  !! ( $_[0]->get_sock_opt(ZMQ_EVENTS) & ZMQ_POLLIN )
 }
 
 sub has_event_pollout {
-  my ($self) = @_;
-  !! ( $self->get_sock_opt(ZMQ_EVENTS) & ZMQ_POLLOUT )
+  !! ( $_[0]->get_sock_opt(ZMQ_EVENTS) & ZMQ_POLLOUT )
 }
 
 1;

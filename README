@@ -43,7 +43,8 @@ DESCRIPTION
     A POE component providing non-blocking ZeroMQ <http://www.zeromq.org>
     (versions 3.x & 4.x) integration.
 
-    See POEx::ZMQ::Socket for details on using these sockets.
+    See POEx::ZMQ::Socket for details on using these sockets and the
+    zmq_socket(3) man page regarding behavior of each socket type.
 
     See the zguide <http://zguide.zeromq.org> for more on using ZeroMQ in
     general.

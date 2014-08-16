@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI::Callable;
-$POEx::ZMQ::FFI::Callable::VERSION = '0.002002';
+$POEx::ZMQ::FFI::Callable::VERSION = '0.003001';
 use Carp ();
 use Scalar::Util ();
 use strictures 1;

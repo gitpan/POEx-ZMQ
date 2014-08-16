@@ -10,6 +10,7 @@ README.mkdn
 TODO
 dist.ini
 examples/publish_time.pl
+examples/ssh_tunnel.sh
 examples/subscribe_time.pl
 lib/POEx/ZMQ.pm
 lib/POEx/ZMQ/Buffered.pm
