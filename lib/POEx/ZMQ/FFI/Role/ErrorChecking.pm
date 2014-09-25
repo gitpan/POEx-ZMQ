@@ -1,9 +1,10 @@
 package POEx::ZMQ::FFI::Role::ErrorChecking;
-$POEx::ZMQ::FFI::Role::ErrorChecking::VERSION = '0.003001';
+$POEx::ZMQ::FFI::Role::ErrorChecking::VERSION = '0.004001';
 use v5.10;
 use Carp 'cluck', 'confess';
 use strictures 1;
 
+use POEx::ZMQ::FFI::Cached;
 use POEx::ZMQ::FFI::Callable;
 use POEx::ZMQ::FFI::Error;
 
@@ -18,9 +19,18 @@ has err_handler => (
   lazy    => 1,
   is      => 'ro',
   isa     => InstanceOf['POEx::ZMQ::FFI::Callable'],
-  builder => sub {
-    my $soname = shift->soname;
-    POEx::ZMQ::FFI::Callable->new(
+  builder => '_build_ffi',
+);
+
+sub _build_ffi {
+  my ($self) = @_;
+  my $soname = $self->soname;
+  
+  my $ffi = POEx::ZMQ::FFI::Cached->get(ErrHandler => $soname);
+  return $ffi if defined $ffi;
+
+  POEx::ZMQ::FFI::Cached->set(
+    ErrHandler => $soname => POEx::ZMQ::FFI::Callable->new(
       zmq_errno => FFI::Raw->new(
         $soname, zmq_errno => FFI::Raw::int
       ),
@@ -31,21 +41,12 @@ has err_handler => (
           FFI::Raw::int,  # -> errno
       ),
     )
-  },
-);
-
-
-sub errno {
-  my ($self) = @_;
-  $self->err_handler->zmq_errno
-}
-
-sub errstr {
-  my ($self, $errno) = @_;
-  $self->err_handler->zmq_strerror(
-    $errno // $self->errno
   )
 }
+
+
+sub errno  { $_[0]->err_handler->zmq_errno }
+sub errstr { $_[0]->err_handler->zmq_strerror( $_[1] // $_[0]->errno ) }
 
 sub _build_zmq_error {
   my ($self, $call) = @_;
@@ -70,17 +71,16 @@ sub throw_if_error {
 }
 
 sub warn_if_error {
-  my ($self, $call, $rc) = @_;
   confess "Expected function name and return code"
-    unless defined $call and defined $rc;
+    unless defined $_[1] and defined $_[2];
 
-  if ($rc == -1) {
-    my $err = $self->_build_zmq_error($call);
+  if ($_[2] == -1) {
+    my $err = $_[0]->_build_zmq_error($_[1]);
     cluck $err . "\n";
     return
   }
 
-  $self
+  $_[0]
 }
 
 1;

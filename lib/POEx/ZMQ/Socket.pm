@@ -1,8 +1,11 @@
 package POEx::ZMQ::Socket;
-$POEx::ZMQ::Socket::VERSION = '0.003001';
+$POEx::ZMQ::Socket::VERSION = '0.004001';
 use v5.10;
 use strictures 1;
+
 use Carp;
+use Scalar::Util 'reftype';
+
 
 use List::Objects::WithUtils;
 
@@ -152,15 +155,27 @@ sub _pxz_emitter_stopped {
 
 =cut
 
-sub get_context_opt { shift->context->get_ctx_opt(@_) }
-sub set_context_opt { shift->context->set_ctx_opt(@_) }
+sub get_context_opt {
+  shift->context->get_ctx_opt(@_)
+}
+sub set_context_opt {
+  my $self = shift;
+  $self->context->set_ctx_opt(@_);
+  $self
+}
 { no warnings 'once';
   *get_ctx_opt = *get_ctx_opt;
   *set_ctx_opt = *set_ctx_opt;
 }
 
-sub get_socket_opt { shift->zsock->get_sock_opt(@_) }
-sub set_socket_opt { shift->zsock->set_sock_opt(@_) }
+sub get_socket_opt {
+  shift->zsock->get_sock_opt(@_)
+}
+sub set_socket_opt {
+  my $self = shift; 
+  $self->zsock->set_sock_opt(@_); 
+  $self 
+}
 { no warnings 'once'; 
   *get_sock_opt = *get_socket_opt;
   *set_sock_opt = *set_socket_opt;
@@ -218,7 +233,7 @@ sub _message_not_sendable {
 
   my $action = $self->max_queue_action;
 
-  if (ref $action eq 'CODE') {
+  if (reftype $action eq 'CODE') {
     my $buf = (blessed $msg && $msg->isa('POEx::ZMQ::Buffered')) ? $msg
       : POEx::ZMQ::Buffered->new(
         item_type => ($is_multipart ? 'multipart' : 'single'),
@@ -245,10 +260,7 @@ sub _message_not_sendable {
     return 1
   }
 
-  if ($action eq 'drop') {
-    return 1
-  }
-
+  # $action eq 'drop' returns 1:
   1
 }
 
@@ -275,6 +287,9 @@ sub _px_send { $_[OBJECT]->send(@_[ARG0 .. $#_]) }
 
 sub send_multipart {
   my ($self, $parts, $flags) = @_;
+
+  confess "Expected an ARRAY of message parts"
+    unless reftype $parts eq 'ARRAY' and @$parts;
 
   return if $self->_message_not_sendable($parts, $flags, 'IS_MULTIPART');
 
@@ -367,9 +382,11 @@ sub _pxz_nb_write {
   return unless $self->_zsock_buf->has_any;
 
   my $send_error;
-  until ($self->_zsock_buf->is_empty || $send_error) {
+  WRITE: until ($self->_zsock_buf->is_empty || $send_error) {
+    my $maybe_fatal;
     my $msg = $self->_zsock_buf->shift;
     my $flags = $msg->flags | ZMQ_DONTWAIT;
+
     try {
       if ($msg->item_type eq 'single') {
         $self->zsock->send( $msg->item, $msg->flags );
@@ -377,23 +394,34 @@ sub _pxz_nb_write {
         $self->zsock->send_multipart( $msg->item, $msg->flags );
       }
     } catch {
-      my $maybe_fatal = $_;
-      if (blessed $maybe_fatal) {
-        my $errno = $maybe_fatal->errno;
-        if ($errno == EAGAIN || $errno == EINTR) {
-          $self->_zsock_buf->unshift($msg);
-        } elsif ($errno == EFSM) {
-          warn "Requeuing message on bad socket state (EFSM) -- ",
-               "your app is probably misusing a socket!";
-          $self->_zsock_buf->unshift($msg); 
-        } else {
-          $send_error = $maybe_fatal->errstr;
-        }
-      } else {
-        $send_error = $maybe_fatal
-      } 
+      $maybe_fatal = $_
     };
-  }
+
+    next WRITE unless $maybe_fatal; 
+
+    # FIXME tests:
+    if (blessed $maybe_fatal) {
+      my $errno = $maybe_fatal->errno;
+
+      if ($errno == EAGAIN || $errno == EINTR) {
+        $self->_zsock_buf->unshift($msg);
+        $poe_kernel->delay(pxz_ready => 0.1);
+        return
+      } elsif ($errno == EFSM) {
+        warn "Requeuing message on bad socket state (EFSM) -- ".
+             "your app is probably misusing a socket!";
+        $self->_zsock_buf->unshift($msg); 
+        $poe_kernel->delay(pxz_ready => 0.1);
+        return
+      }
+
+      $send_error = $maybe_fatal->errstr;
+      last WRITE
+    } else {
+      $send_error = $maybe_fatal;
+      last WRITE
+    } 
+  } # WRITE
 
   confess $send_error if defined $send_error;
 
@@ -592,6 +620,8 @@ Set context option values.
 
 See L<POEx::ZMQ::FFI::Context/set_ctx_opt> & L<zmq_ctx_set(3)>
 
+Returns the invocant.
+
 =head3 get_socket_opt
 
   my $last_endpt = $sock->get_sock_opt( ZMQ_LAST_ENDPOINT );
@@ -608,6 +638,8 @@ Set socket option values.
 
 See L<POEx::ZMQ::FFI::Socket/set_sock_opt> & L<zmq_setsockopt(3)>.
 
+Returns the invocant.
+
 =head3 bind
 
   $sock->bind( @endpoints );
@@ -615,6 +647,8 @@ See L<POEx::ZMQ::FFI::Socket/set_sock_opt> & L<zmq_setsockopt(3)>.
 Call a L<zmq_bind(3)> for one or more specified endpoints.
 
 A L</bind_added> event is emitted for each added endpoint.
+
+Returns the invocant.
 
 =head3 unbind
 
@@ -624,6 +658,8 @@ Call a L<zmq_unbind(3)> for one or more specified endpoints.
 
 A L</bind_removed> event is emitted for each removed endpoint.
 
+Returns the invocant.
+
 =head3 connect
 
   $sock->connect( @endpoints );
@@ -631,6 +667,8 @@ A L</bind_removed> event is emitted for each removed endpoint.
 Call a L<zmq_bind(3)> for one or more specified endpoints.
 
 A L</connect_added> event is emitted for each added endpoint.
+
+Returns the invocant.
 
 =head3 disconnect
 
@@ -640,6 +678,8 @@ Call a L<zmq_disconnect(3)> for one or more specified endpoints.
 
 A L</disconnect_issued> event is emitted for each removed endpoint.
 
+Returns the invocant.
+
 =head3 send
 
   $sock->send( $msg, $flags );
@@ -648,6 +688,8 @@ Send a single-part message (without blocking).
 
 Sending will not block, regardless of the typical behavior of the ZeroMQ
 socket. See L</max_queue_size> for details on queuing behavior.
+
+Returns the invocant.
 
 =head3 send_multipart
 
@@ -659,6 +701,8 @@ Send a multi-part message.
 
 Applies the same application-side queuing behavior as L</send>; see
 L</max_queue_size>.
+
+Returns the invocant.
 
 =head2 ACCEPTED EVENTS
 

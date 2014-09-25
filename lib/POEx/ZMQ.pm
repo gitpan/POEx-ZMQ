@@ -1,5 +1,5 @@
 package POEx::ZMQ;
-$POEx::ZMQ::VERSION = '0.003001';
+$POEx::ZMQ::VERSION = '0.004001';
 use strictures 1;
 
 use Scalar::Util 'blessed';

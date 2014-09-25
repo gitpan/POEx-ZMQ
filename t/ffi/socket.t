@@ -21,6 +21,9 @@ $SIG{ALRM} = sub { die "Test timed out!" };
   my $router = $ctx->create_socket(ZMQ_ROUTER);
   my $req    = $ctx->create_socket(ZMQ_REQ);
 
+  cmp_ok $router->_ffi, '==', $req->_ffi,
+    'sockets share FFI obj';
+
   # context
   isa_ok $router->context, 'POEx::ZMQ::FFI::Context';
 
@@ -127,5 +130,8 @@ $SIG{ALRM} = sub { die "Test timed out!" };
 }
 
 pass "Nobody croaked after object destruction";
+
+cmp_ok scalar keys %POEx::ZMQ::FFI::Cached::Cache, '==', 2,
+  'have two cached FFI objs';
 
 done_testing

@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI::Socket;
-$POEx::ZMQ::FFI::Socket::VERSION = '0.003001';
+$POEx::ZMQ::FFI::Socket::VERSION = '0.004001';
 use v5.10;
 use Carp;
 use strictures 1;
@@ -17,6 +17,7 @@ use POEx::ZMQ::Types -types;
 
 use POEx::ZMQ::Constants -all;
 use POEx::ZMQ::FFI;
+use POEx::ZMQ::FFI::Cached;
 use POEx::ZMQ::FFI::Callable;
 
 use FFI::Raw;
@@ -24,16 +25,21 @@ use FFI::Raw;
 
 =pod
 
-=for Pod::Coverage OPTVAL_MAXLEN
+=for Pod::Coverage OPTVAL_MAXLEN ZMQ_MSG_SIZE
 
 =for comment
 
+OPTVAL_MAXLEN
 Maximum length of binary/string type option values.
 (Large enough to hold ZMQ_IDENTITY / ZMQ_LAST_ENDPOINT)
+
+ZMQ_MSG_SIZE
+Maximum zmg_msg_t_size plus wiggle room.
 
 =cut
 
 sub OPTVAL_MAXLEN () { 256 }
+sub ZMQ_MSG_SIZE  () { 96 }
 
 
 use Moo; use MooX::late;
@@ -63,9 +69,18 @@ has _ffi => (
   lazy      => 1,
   is        => 'ro',
   isa       => InstanceOf['POEx::ZMQ::FFI::Callable'],
-  builder   => sub {
-    my $soname = shift->soname;
-    POEx::ZMQ::FFI::Callable->new(
+  builder   => '_build_ffi',
+);
+
+sub _build_ffi {
+  my ($self) = @_;
+  my $soname = $self->soname;
+
+  my $ffi = POEx::ZMQ::FFI::Cached->get(Socket => $soname);
+  return $ffi if defined $ffi;
+
+  POEx::ZMQ::FFI::Cached->set(
+    Socket => $soname => POEx::ZMQ::FFI::Callable->new(
       zmq_socket => FFI::Raw->new(
         $soname, zmq_socket =>
           FFI::Raw::ptr,  # <- socket ptr
@@ -189,8 +204,8 @@ has _ffi => (
           FFI::Raw::int,  # -> len
       ),
     )
-  },
-);
+  )
+}
 
 has _socket_ptr => (
   lazy      => 1,
@@ -405,16 +420,19 @@ sub send {
 }
 
 sub send_multipart {
+  my ($self, $data, $flags) = @_;
+  $flags //= 0;
   confess "Expected an ARRAY of message parts"
-    unless Scalar::Util::reftype($_[1]) eq 'ARRAY'
-    and @{ $_[1] };
-  $_[0]->send( $_[1]->[$_], ZMQ_SNDMORE ) for 0 .. ($#{ $_[1] } - 1);
-  $_[0]->send( $_[1]->[-1], ($_[2] // 0) );
+    unless Scalar::Util::reftype($data) eq 'ARRAY'
+    and @$data;
+  $self->send( $data->[$_], $flags | ZMQ_SNDMORE ) for 0 .. ($#$data - 1);
+  $self->send( $data->[-1], $flags );
 }
 
 sub recv {
   my $self = $_[0];
-  my ($ffi, $zmsg_ptr, $zmsg_len) = ( $self->_ffi, FFI::Raw::memptr(40) );
+  my ($ffi, $zmsg_ptr, $zmsg_len) 
+    = ( $self->_ffi, FFI::Raw::memptr(ZMQ_MSG_SIZE) );
 
   $self->throw_if_error( zmq_msg_init => $ffi->zmq_msg_init($zmsg_ptr) );
   $self->throw_if_error( zmq_msg_recv => (

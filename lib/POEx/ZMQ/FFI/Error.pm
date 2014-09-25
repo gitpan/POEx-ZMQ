@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI::Error;
-$POEx::ZMQ::FFI::Error::VERSION = '0.003001';
+$POEx::ZMQ::FFI::Error::VERSION = '0.004001';
 use strictures 1;
 
 
