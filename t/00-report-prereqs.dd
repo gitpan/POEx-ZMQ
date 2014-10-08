@@ -17,6 +17,9 @@ do { my $x = {
                                     }
                     },
        'runtime' => {
+                      'recommends' => {
+                                        'Convert::Z85' => '0'
+                                      },
                       'requires' => {
                                       'Exporter::Tiny' => '0',
                                       'FFI::Raw' => '0',

@@ -56,7 +56,7 @@ DESCRIPTION
     This is early-development software, as indicated by the "0.x" version
     number. The test suite is incomplete, bugs are sure to be lurking,
     documentation is not yet especially verbose, and the API is not
-    completely guaranteed. Issues & pull requests are welcome, of course:
+    *completely* guaranteed. Issues & pull requests are welcome, of course:
     <http://www.github.com/avenj/poex-zmq>
 
     If you are not using POE, try ZMQ::FFI for an excellent loop-agnostic
@@ -91,9 +91,15 @@ DESCRIPTION
     If creating a new context object, @_ is passed through to the
     POEx::ZMQ::FFI::Context constructor.
 
-    The context object should be shared between sockets belonging to the
-    same process -- a forked child process must create a new context with
-    its own set of sockets.
+    The context object should typically be shared between sockets belonging
+    to the same process. However, multiple contexts may exist within the
+    same application (and they may have their own respective library
+    "soname"). A forked child process must create a new
+    POEx::ZMQ::FFI::Context with its own set of sockets.
+
+    The context object provides access to other useful ZeroMQ functionality,
+    such as library version number retrieval and CURVE key pair generation.
+    See POEx::ZMQ::FFI::Context for details.
 
    socket
       my $sock = POEx::ZMQ->socket(context => $ctx, type => ZMQ_ROUTER);
@@ -105,10 +111,16 @@ DESCRIPTION
       my $sock = $zmq->socket(type => ZMQ_ROUTER);
 
     If called as an object method, returns a new POEx::ZMQ::Socket that uses
-    the POEx::ZMQ::FFI::Context object belonging to the instance; see
-    "context".
+    the POEx::ZMQ::FFI::Context object belonging to the instance; see "new"
+    & "context".
 
     @_ is passed through to the POEx::ZMQ::Socket constructor.
+
+SEE ALSO
+    Convert::Z85 for encoding/decoding CURVE keys (see zmq_curve(7) on
+    libzmq4+).
+
+    ZMQ::FFI for a lower-level, non-POE interface to ZeroMQ sockets.
 
 AUTHOR
     Jon Portnoy <avenj@cobaltirc.org>

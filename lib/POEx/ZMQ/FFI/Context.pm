@@ -1,7 +1,9 @@
 package POEx::ZMQ::FFI::Context;
-$POEx::ZMQ::FFI::Context::VERSION = '0.004001';
+$POEx::ZMQ::FFI::Context::VERSION = '0.005001';
 use Carp;
 use strictures 1;
+
+use List::Objects::WithUtils;
 
 use FFI::Raw;
 
@@ -84,6 +86,18 @@ sub _build_ffi {
           FFI::Raw::int,  # <- rc
           FFI::Raw::ptr,  # -> ctx ptr
       ),
+
+      ( $self->get_zmq_version->major >= 4 ?
+          (
+            zmq_curve_keypair => FFI::Raw->new(
+              $soname, zmq_curve_keypair =>
+                FFI::Raw::int,  # <- rc
+                FFI::Raw::ptr,  # -> pub key ptr
+                FFI::Raw::ptr,  # -> priv key ptr
+            )
+          )
+          : ()
+      ),
     )
   )
 }
@@ -135,7 +149,7 @@ sub create_socket {
   )
 }
 
-sub get_zmq_version { POEx::ZMQ::FFI->get_version( shift->soname ) }
+sub get_zmq_version { POEx::ZMQ::FFI->get_version( $_[0]->soname ) }
 
 sub get_ctx_opt {
   my ($self, $opt) = @_;
@@ -153,6 +167,27 @@ sub set_ctx_opt {
   );
 }
 
+sub generate_keypair {
+  my ($self) = @_;
+
+  unless ($self->_ffi->can('zmq_curve_keypair')) {
+    confess "Cannot generate key pair; missing zmq_curve_keypair support"
+  }
+
+  my ($pub, $sec) = (
+    FFI::Raw::memptr(41),
+    FFI::Raw::memptr(41)
+  );
+
+  $self->throw_if_error( zmq_curve_keypair =>
+    $self->_ffi->zmq_curve_keypair( $pub, $sec )
+  );
+
+  hash(
+    public => POEx::ZMQ::FFI->zunpack('string', undef, $pub),
+    secret => POEx::ZMQ::FFI->zunpack('string', undef, $sec)
+  )->inflate
+}
 
 1;
 
@@ -166,14 +201,18 @@ POEx::ZMQ::FFI::Context - Backend ZeroMQ context objects for POEx::ZMQ
 
 =head1 SYNOPSIS
 
-  # Used internally by POEx::ZMQ
+  # Used internally by POEx::ZMQ; see below for useful methods
 
 =head1 DESCRIPTION
 
-An object representing a ZeroMQ context; used internally by L<POEx::ZMQ>.
+An object representing a ZeroMQ context.
 
-See L<ZMQ::FFI> for a ZeroMQ FFI implementation intended for use outside
-L<POE>.
+These are typically created via a higher-level mechanism (see L<POEx::ZMQ>)
+and accessible from your L<POEx::ZMQ::Socket> instance:
+
+  my $ctx = $my_sock->context;
+  my $keypair = $ctx->generate_keypair;
+  # ...
 
 =head2 ATTRIBUTES
 
@@ -235,6 +274,20 @@ calls (used internally by L<POEx::ZMQ::FFI::Socket> objects).
 
 Returns the L<POEx::ZMQ::FFI/get_version> struct-like object for the current
 L</soname>.
+
+=head3 generate_keypair
+
+  my $keypair = $ctx->generate_keypair;
+  my $public  = $keypair->public;
+  my $secret  = $keypair->secret;
+
+Produces a Z85-encoded CURVE public/secret key pair for use with
+L<zmq_curve(7)>-related socket options.
+
+(See L<Convert::Z85> if you need to convert these back to raw binary data or
+vice versa.)
+
+Dies with a stack trace if your C<libzmq> does not have CURVE support.
 
 =head2 CONSUMES
 

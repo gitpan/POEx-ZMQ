@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI;
-$POEx::ZMQ::FFI::VERSION = '0.004001';
+$POEx::ZMQ::FFI::VERSION = '0.005001';
 use v5.10;
 use Carp;
 use strictures 1;
@@ -20,8 +20,14 @@ sub find_soname {
   my ($class) = @_;
 
   state $search = array( qw/
-    libzmq.so.3 libzmq.so
-    libzmq.3.dylib libzmq.dylib
+    libzmq.so.4
+    libzmq.so.4.0.0
+    libzmq.so.3
+    libzmq.so
+    
+    libzmq.4.dylib
+    libzmq.3.dylib
+    libzmq.dylib
   / );
 
   my $soname;
@@ -152,7 +158,8 @@ want to look if you're not using L<POEx::ZMQ>).
 
   my $soname = POEx::ZMQ::FFI->find_soname;
 
-Attempts to find an appropriate C<libzmq> dynamic library; croaks on failure.
+Attempts to find an appropriate C<libzmq> dynamic library, with a preference
+for the newest known version; croaks on failure.
 
 =head3 get_version
 

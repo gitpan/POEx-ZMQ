@@ -1,5 +1,5 @@
 package POEx::ZMQ::Socket;
-$POEx::ZMQ::Socket::VERSION = '0.004001';
+$POEx::ZMQ::Socket::VERSION = '0.005001';
 use v5.10;
 use strictures 1;
 
@@ -138,7 +138,7 @@ sub _pxz_emitter_started {
 
   if ($self->ipv6) {
     $self->set_sock_opt(
-      $self->context->get_zmq_version->string =~ /^(4|3.3)/ ?
+      $self->context->get_zmq_version->string =~ /^(4|3\.3)/ ?
         (ZMQ_IPV6, 1) : (ZMQ_IPV4ONLY, 0)
     )
   }
@@ -215,7 +215,6 @@ sub _px_connect { $_[OBJECT]->connect(@_[ARG0 .. $#_]) }
 
 sub disconnect {
   my $self = shift;
-  
   for my $endpt (@_) {
     $self->zsock->disconnect($_);
     $self->emit( disconnect_issued => $endpt )
@@ -234,14 +233,14 @@ sub _message_not_sendable {
   my $action = $self->max_queue_action;
 
   if (reftype $action eq 'CODE') {
-    my $buf = (blessed $msg && $msg->isa('POEx::ZMQ::Buffered')) ? $msg
+    my $bufitem = (blessed $msg && $msg->isa('POEx::ZMQ::Buffered')) ? $msg
       : POEx::ZMQ::Buffered->new(
         item_type => ($is_multipart ? 'multipart' : 'single'),
         item      => $msg,
         ( defined $flags ? (flags => $flags) : () ),
       );
 
-    if ( $action->($buf, $self->_zsock_buf) ) {
+    if ( $action->($bufitem, $self->_zsock_buf) ) {
       # coderef action can return true to cause an event check ->
       $self->yield('pxz_ready')
     }
@@ -319,22 +318,18 @@ sub _pxz_sock_unwatch {
 
 sub _pxz_ready {
   my ($kernel, $self) = @_[KERNEL, OBJECT];
-
-  # Level-triggered behavior is annoying; this select ought be triggered when
-  # any events happen (which might or might not pertain to us). We might not
-  # be notified if state changes as a result of something we do. 
-  # At the moment:
   #  - Try to write pending
   #    - Return if we have nothing queued
-  #    - yield another pxz_ready if successful or EAGAIN, EINTR, EFSM
+  #    - yield another pxz_ready if successful
+  #    - delay another pxz_ready if EAGAIN, EINTR, EFSM
   #  - Try to read pending
   #    - Return if ZeroMQ has nothing queued
-  #    - yield another pxz_ready if successful or EAGAIN, EINTR
-  # Probably we need smarter management of pxz_ready events; as it is, we're
-  # stuck in a yield() loop until something happens if queuing app-side while
-  # trying to write against a blocked socket.
-  $self->call('pxz_nb_write');
-  $self->call('pxz_nb_read');
+  #    - yield another pxz_ready if successful
+  $self->call('pxz_nb_write')
+    unless $self->type == ZMQ_SUB or $self->type == ZMQ_PULL;
+
+  $self->call('pxz_nb_read')
+    unless $self->type == ZMQ_PUB or $self->type == ZMQ_PUSH;
 }
 
 
@@ -373,6 +368,7 @@ sub _pxz_nb_read {
 
   confess $recv_err if $recv_err;
 
+  # yield back to check for pollin / pending sends ->
   $self->yield('pxz_ready');
 }
 
@@ -384,7 +380,8 @@ sub _pxz_nb_write {
   my $send_error;
   WRITE: until ($self->_zsock_buf->is_empty || $send_error) {
     my $maybe_fatal;
-    my $msg = $self->_zsock_buf->shift;
+
+    my $msg = $self->_zsock_buf->get(0);
     my $flags = $msg->flags | ZMQ_DONTWAIT;
 
     try {
@@ -393,6 +390,7 @@ sub _pxz_nb_write {
       } elsif ($msg->item_type eq 'multipart') {
         $self->zsock->send_multipart( $msg->item, $msg->flags );
       }
+      $self->_zsock_buf->shift;
     } catch {
       $maybe_fatal = $_
     };
@@ -404,13 +402,11 @@ sub _pxz_nb_write {
       my $errno = $maybe_fatal->errno;
 
       if ($errno == EAGAIN || $errno == EINTR) {
-        $self->_zsock_buf->unshift($msg);
         $poe_kernel->delay(pxz_ready => 0.1);
         return
       } elsif ($errno == EFSM) {
         warn "Requeuing message on bad socket state (EFSM) -- ".
              "your app is probably misusing a socket!";
-        $self->_zsock_buf->unshift($msg); 
         $poe_kernel->delay(pxz_ready => 0.1);
         return
       }
@@ -428,7 +424,10 @@ sub _pxz_nb_write {
   $self->yield('pxz_ready');
 }
 
-# FIXME monitor support
+# FIXME monitor support needs a look,
+#  also changed upstream somewheres along the way
+#
+# basic outline:
 #  - FFI::Socket method that calls zmq_socket_monitor
 #  - spawn a child POEx::ZMQ::Socket for our side of ZMQ_PAIR,
 #     give it a special event prefix
@@ -521,9 +520,9 @@ Defaults to false.
 =head3 max_queue_size
 
 Socket types that would normally block or return C<EFSM> (for example,
-out-of-order REP/REQ communication) will queue messages
-instead; C<max_queue_size> is the maximum number of messages queued
-application-side before L</max_queue_action> is invoked.
+out-of-order REP/REQ communication) will queue messages instead to avoid
+blocking the event loop; C<max_queue_size> is the maximum number of messages
+queued application-side before L</max_queue_action> is invoked.
 
 This is not related to messages queued on the ZeroMQ side; see
 L<zmq_socket(3)> for details on socket behavior.
@@ -589,7 +588,7 @@ L<POEx::ZMQ::Buffered>.
 
 =head3 zmq_version
 
-Returns the ZeroMQ version, as a struct-like object; see
+Returns the ZeroMQ version as a struct-like object; see
 L<POEx::ZMQ::FFI/get_version>.
 
 =head3 get_buffered_items

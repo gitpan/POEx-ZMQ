@@ -17,6 +17,8 @@ my $cl = POEx::ZMQ::FFI::Callable->new(
 
 can_ok $cl, 'funcA', 'funcB';
 
+ok !$cl->can('foobarbaz'), 'negative can ok';
+
 ok $cl->funcA, 'callable funcs ok (1)';
 ok $cl->funcB, 'callable funcs ok (2)';
 
@@ -28,5 +30,10 @@ ok $methods->has_any(sub { $_ eq 'funcA' })
 
 my $funcA = $cl->FETCH('funcA');
 ok $funcA->call, 'FETCH ok';
+
+is_deeply
+  [ sort keys %{ $cl->EXPORT } ],
+  [ 'funcA', 'funcB' ],
+  'EXPORT ok';
 
 done_testing

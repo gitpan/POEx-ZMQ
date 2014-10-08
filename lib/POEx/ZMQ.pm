@@ -1,5 +1,5 @@
 package POEx::ZMQ;
-$POEx::ZMQ::VERSION = '0.004001';
+$POEx::ZMQ::VERSION = '0.005001';
 use strictures 1;
 
 use Scalar::Util 'blessed';
@@ -111,7 +111,7 @@ the documentation for that distribution is likely to be helpful.
 
 B<This is early-development software,> as indicated by the C<0.x> version number.
 The test suite is incomplete, bugs are sure to be lurking, documentation is
-not yet especially verbose, and the API is not completely guaranteed.  Issues
+not yet especially verbose, and the API is not I<completely> guaranteed.  Issues
 & pull requests are welcome, of course:
 L<http://www.github.com/avenj/poex-zmq>
 
@@ -150,9 +150,15 @@ created (and preserved for use during socket creation; see L</socket>).
 If creating a new context object, C<@_> is passed through to the
 L<POEx::ZMQ::FFI::Context> constructor.
 
-The context object should be shared between sockets belonging to the same
-process -- a forked child process must create a new context with its own set
-of sockets.
+The context object should typically be shared between sockets belonging to the
+same process. However, multiple contexts may exist within the same
+application (and they may have their own respective library C<soname>).
+A forked child process must create a new L<POEx::ZMQ::FFI::Context> with its
+own set of sockets.
+
+The context object provides access to other useful ZeroMQ functionality, such
+as library version number retrieval and CURVE key pair generation. See
+L<POEx::ZMQ::FFI::Context> for details.
 
 =head3 socket
 
@@ -166,9 +172,16 @@ L<POEx::ZMQ::FFI::Context>.
 
 If called as an object method, returns a new L<POEx::ZMQ::Socket> that uses
 the L<POEx::ZMQ::FFI::Context> object belonging to the instance; see
-L</context>.
+L</new> & L</context>.
 
 C<@_> is passed through to the L<POEx::ZMQ::Socket> constructor.
+
+=head1 SEE ALSO
+
+L<Convert::Z85> for encoding/decoding CURVE keys (see L<zmq_curve(7)> on
+libzmq4+).
+
+L<ZMQ::FFI> for a lower-level, non-POE interface to ZeroMQ sockets.
 
 =head1 AUTHOR
 
