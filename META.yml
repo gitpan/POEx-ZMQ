@@ -10,7 +10,7 @@ configure_requires:
   Devel::CheckLib: 0.9
   ExtUtils::MakeMaker: 0
 dynamic_config: 0
-generated_by: 'Dist::Zilla version 5.020, CPAN::Meta::Converter version 2.142690'
+generated_by: 'Dist::Zilla version 5.021, CPAN::Meta::Converter version 2.142690'
 license: perl
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
@@ -44,4 +44,4 @@ requires:
   strictures: 1
 resources:
   repository: git://github.com/avenj/poex-zmq.git
-version: 0.005001
+version: 0.005002

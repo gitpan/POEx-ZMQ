@@ -1,5 +1,5 @@
 package POEx::ZMQ;
-$POEx::ZMQ::VERSION = '0.005001';
+$POEx::ZMQ::VERSION = '0.005002';
 use strictures 1;
 
 use Scalar::Util 'blessed';
@@ -78,16 +78,18 @@ POEx::ZMQ - Asynchronous ZeroMQ sockets for POE
       },
 
       zmq_recv_multipart => sub {
-        # ROUTER got message from REQ; sender identity is prefixed,
+        # ROUTER received a message; sender identity is prefixed,
         # parts are available as a List::Objects::WithUtils::Array ->
         my $parts = $_[ARG0];
-        my ($id, undef, $content) = $parts->all;
 
-        my $response = 'foo';
+        # Handle the usual ZeroMQ message framing scheme by capturing
+        # prefixed identities including empty message delimiter, followed
+        # by our message body:
+        my ($envelope, $body) = $parts->tail;
 
-        # $_[SENDER] was the ROUTER socket, send a response back:
+        # $_[SENDER] was the ROUTER socket, send a response back to origin:
         $_[KERNEL]->post( $_[SENDER], send_multipart =>
-          $id, '', $response
+          [ $envelope, 'foo' ]
         );
       },
     },

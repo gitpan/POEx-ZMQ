@@ -1,5 +1,5 @@
 package POEx::ZMQ::Socket;
-$POEx::ZMQ::Socket::VERSION = '0.005001';
+$POEx::ZMQ::Socket::VERSION = '0.005002';
 use v5.10;
 use strictures 1;
 
@@ -425,7 +425,7 @@ sub _pxz_nb_write {
 }
 
 # FIXME monitor support needs a look,
-#  also changed upstream somewheres along the way
+#  also changed upstream in 4.1.0rc
 #
 # basic outline:
 #  - FFI::Socket method that calls zmq_socket_monitor
@@ -482,7 +482,7 @@ POEx::ZMQ::Socket - A POE-enabled ZeroMQ socket
         # ... do work ...
         # Send a response back:
         $_[KERNEL]->post( $_[SENDER], send_multipart =>
-          $id, '', $response
+          [ $id, '', $response ]
         );
       },
     },
@@ -693,7 +693,7 @@ Returns the invocant.
 =head3 send_multipart
 
   $sock->send_multipart( [ @parts ], $flags );
-  # For example, a ROUTER sending to $id ->
+  # A ROUTER sending to $id ->
   $rtr->send_multipart( [ $id, '', $msg ], $flags );
 
 Send a multi-part message.
@@ -773,9 +773,21 @@ item.
     );
   }
 
-Emitted when a multipart message is received; C<$_[ARG0]> is a
-L<List::Objects::WithUtils::Array> array-type object containing the message
-parts.
+  # ... or with more complex routing envelopes:
+  sub zmq_recv_multipart {
+    my $parts = $_[ARG0];
+    # pop() the application-relevant body:
+    my $body = $parts->pop;
+    # Then include the envelope (including empty delimiter msg) later:
+    $_[KERNEL]->post( $_[SENDER], send_multipart =>
+      [ $parts->all, $response ]
+    );
+  }
+
+Emitted when a multipart message is received.
+
+C<$_[ARG0]> is a L<List::Objects::WithUtils::Array> array-type object
+containing the message parts.
 
 =head1 CONSUMES
 
