@@ -1,5 +1,5 @@
 package POEx::ZMQ::Socket;
-$POEx::ZMQ::Socket::VERSION = '0.005002';
+$POEx::ZMQ::Socket::VERSION = '0.005003';
 use v5.10;
 use strictures 1;
 

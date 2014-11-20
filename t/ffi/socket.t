@@ -101,10 +101,13 @@ $SIG{ALRM} = sub { die "Test timed out!" };
     'ZMQ_AFFINITY (uint64) set/get ok';
   $router->set_sock_opt(ZMQ_AFFINITY, 1);
 
-  # set_sock_opt (string)
-  # FIXME version check, test ZMQ_PLAIN_USERNAME
-  # get_sock_opt (string)
-  # FIXME
+  if ($router->context->get_zmq_version->major >= 4) {
+    # set_sock_opt (string)
+    $router->set_sock_opt(ZMQ_PLAIN_USERNAME, 'foo');
+    # get_sock_opt (string)
+    cmp_ok $router->get_sock_opt(ZMQ_PLAIN_USERNAME), 'eq', 'foo',
+      'ZMQ_PLAIN_USERNAME (string) set/get ok';
+}
 
   # set_sock_opt (binary)
   $router->set_sock_opt(ZMQ_IDENTITY, 'foo');
@@ -122,11 +125,11 @@ $SIG{ALRM} = sub { die "Test timed out!" };
     'ZMQ_FD == fileno(socket->get_handle)';
   undef $fh;
 
-  # unbind
-  # FIXME
-
-  # disconnect
-  # FIXME
+  # disconnect (throws on error)
+  $req->disconnect($endpt);
+  # unbind (throws on error)
+  $router->unbind($endpt);
+  pass "disconnect and unbind didn't throw";
 }
 
 pass "Nobody croaked after object destruction";

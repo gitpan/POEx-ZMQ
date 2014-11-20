@@ -1,5 +1,5 @@
 package POEx::ZMQ::FFI::Cached;
-$POEx::ZMQ::FFI::Cached::VERSION = '0.005002';
+$POEx::ZMQ::FFI::Cached::VERSION = '0.005003';
 # A simplistic way to share POEx::ZMQ::FFI::Callable objects
 
 use Carp;

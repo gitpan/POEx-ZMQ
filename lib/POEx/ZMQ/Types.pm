@@ -1,5 +1,5 @@
 package POEx::ZMQ::Types;
-$POEx::ZMQ::Types::VERSION = '0.005002';
+$POEx::ZMQ::Types::VERSION = '0.005003';
 use strict; use warnings FATAL => 'all';
 
 use Type::Library   -base;
@@ -42,7 +42,7 @@ coerce  ZMQSocketType =>
 
 =head1 NAME
 
-POEx::ZMQ::Types - Type-Tiny types for use with POEx::ZMQ
+POEx::ZMQ::Types - Type::Tiny types for use with POEx::ZMQ
 
 =head1 SYNOPSIS
 

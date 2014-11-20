@@ -1,8 +1,8 @@
 do { my $x = {
        'configure' => {
                         'requires' => {
-                                        'Devel::CheckLib' => '0.9',
-                                        'ExtUtils::MakeMaker' => '0'
+                                        'ExtUtils::MakeMaker' => '0',
+                                        'FFI::CheckLib' => '0.03'
                                       }
                       },
        'develop' => {
@@ -18,27 +18,28 @@ do { my $x = {
                     },
        'runtime' => {
                       'recommends' => {
-                                        'Convert::Z85' => '0'
+                                        'Convert::Z85' => '0',
+                                        'Crypt::ZCert' => '0'
                                       },
                       'requires' => {
                                       'Exporter::Tiny' => '0',
                                       'FFI::Raw' => '0',
                                       'Import::Into' => '0',
                                       'List::Objects::Types' => '1.002',
-                                      'List::Objects::WithUtils' => '2.013',
+                                      'List::Objects::WithUtils' => '2.016',
                                       'Math::Int64' => '0',
                                       'Module::Runtime' => '0',
-                                      'Moo' => '1',
+                                      'Moo' => '0',
                                       'MooX::Role::POE::Emitter' => '0.12',
                                       'MooX::late' => '0.014',
-                                      'POE' => '0',
+                                      'POE' => '1',
                                       'POSIX' => '0',
                                       'Throwable' => '0',
                                       'Time::HiRes' => '0',
                                       'Try::Tiny' => '0',
                                       'Type::Tiny' => '0.04',
                                       'namespace::clean' => '0',
-                                      'perl' => 'v5.16.0',
+                                      'perl' => '5.016',
                                       'strictures' => '1'
                                     }
                     },
